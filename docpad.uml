@@ -1,0 +1,284 @@
+@startuml
+
+title Docpad architecture overview
+
+namespace W3C.Core2.DOM.Document {
+
+    class Element <<Node>> {
+        int x()
+    }
+
+    class Event {
+
+    }
+
+}
+
+namespace Backbone {
+
+    abstract Event {
+
+        object.on(event, callback, [context]) <i>alias</i> <b>bind</b>
+        object.off([event], [callback], [context]) <i>alias</i> <b>unbind</b>
+        object.trigger(event, [*args])
+        object.once(event, callback, [context])
+        object.listenTo(other, event, callback)
+        object.stopListening([other], [event], [callback])
+
+        __ events catalog __
+        add (model,collection, options)
+        remove (model,collection, options)
+        reset (collection, options)
+        sort (collection, options)
+        change (model, options)
+        change:[attribute] (model, value, options)
+        destroy (model, collection, options)
+        request (model, xhr, options)
+        sync (model, resp, options)
+        error (model, collection)
+        route:[name] (router)
+
+        all
+
+    }
+
+    abstract Model {
+
+        __ prototype chain __
+        extend (properties, [classProperties])
+
+        .. constructor / initialize ..
+        new Model([attributes], [options])
+
+        __ getters / setters __
+        hash get (attribute)
+        hash set (attributes)
+        EscapedHTML escape (attribute)
+        bool has (attribute)
+        + unset (attribute, [options]) <b>⚡</b> change
+        + clear ([options]) ⚡ change
+
+        id
+        idAttribute
+        cid
+        hash attributes
+        hash changed
+        defaults or defaults()
+        toJSON()
+        sync (method, model, [options])
+        fetch ([options])
+        save ([attributes], [options])
+        destroy ([options])
+        validate(attributes)
+        url()
+        urlRoot
+        parse (response)
+        clone()
+        isNew()
+        change()
+        hasChanged ([attribute])
+        changedAttributes ([attributes])
+        previous (attribute)
+        previousAttributes()
+        urlRoot()
+
+    }
+
+    Collection "1" *-- "many" Model : contains ordered sets of
+    abstract Collection {
+
+        extend (properties, [classProperties])
+        model
+
+        .. constructor / initialize ..
+        new Collection([models], [options])
+
+        __ methods __
+        toJSON()
+        sync (method, collection, [options])
+
+        proxy Underscore
+
+        add (models, [options])
+        remove (models, [options])
+        reset ([models], [options])
+        update (models, [options])
+        get (id)
+        at (index)
+        push (model, [options])
+        pop ([options])
+        unshift(model, [options])
+        shift ([options])
+        length
+        comparator
+        sort ([options])
+        pluck (attribute)
+        where (attributes)
+        url
+        url()
+        parse (response)
+        clone()
+        fetch ([options])
+        create(attributes, [options])
+
+    }
+
+    abstract Router {
+        extend(properties, [classProperties])
+        routes
+
+        .. constructor / initialize ..
+        new Router([options])
+
+        route (route, name, [callback])
+        navigate (fragment, [options])
+
+    }
+
+    abstract history {
+        start ([options])
+    }
+
+    abstract sync {
+        .. map CRUD to REST ..
+        create → POST   /collection
+        read → GET   /collection[/id]
+        update → PUT   /collection/id
+        delete → DELETE   /collection/id
+
+        ajax = function(request) { ... };
+        bool emulateHTTP
+        bool emulateJSON
+
+    }
+
+    abstract View {
+        more convention than code
+
+        extend (properties, [classProperties])
+
+        .. constructor / initialize ..
+        new View ([options])
+
+        el
+        $el
+        setElement(element)
+        $(selector) jQuery or Zepto
+        render()
+        remove()
+        make (tagName, [attributes], [content])
+
+        delegateEvents([events])
+        undelegateEvents()
+
+    }
+
+    abstract Utility {
+        noConflict()
+        $
+
+    }
+
+    View --> JavaScriptTemplatingLibrary
+    View.render -- Model.change : bind
+
+
+    interface Underscore <? proxies Underscore > {
+
+        forEach (each)
+        map (collect)
+        reduce (foldl, inject)
+        reduceRight (foldr)
+        find (detect)
+        filter (select)
+        reject
+        every (all)
+        some (any)
+        include (contains)
+        invoke
+        max
+        min
+        sortBy
+        groupBy
+        sortedIndex
+        shuffle
+        toArray
+        size
+        first (head, take)
+        initial
+        rest (tail)
+        last
+        without
+        indexOf
+        lastIndexOf
+        isEmpty
+        chain
+
+    }
+
+}
+
+namespace Docpad.Library {
+
+    package Base << File >> {
+
+        Base.Event <|-- Backbone.Event
+        abstract Base.Event <? extends Backbone.Event > {
+            log()
+            emit()
+        }
+
+        Base.Model <|-- Backbone.Model
+        abstract Base.Model <? extends Backbone.Model > {
+            setDefaults(defaults)
+            emit()
+        }
+
+        Base.Collection <|-- Backbone.Collection
+        abstract Base.Collection <? extends Backbone.Collection > {
+            log()
+            emit()
+        }
+
+        Base.View <|-- Backbone.View
+        abstract Base.View <? extends Backbone.View > {
+            log()
+            emit()
+        }
+
+        Base.QueryCollection <|-- queryEngine.QueryCollection
+        abstract Base.QueryCollection <? extends queryEngine.QueryCollection > {
+            log()
+            emit()
+            Object QueryCollection
+        }
+
+
+
+
+
+    }
+
+    package Docpad << File >> {
+
+        class DocPad <? extends EventEmitterEnhanced > {
+
+            Docpad.Library.Base.Event <|-- Event
+            Object[] Base.Model
+            Object[] Base.Collection
+            Object[] Base.View
+            Object[] Base.QueryCollection
+
+            class FileModel
+            class DocumentModel
+            class FilesCollection
+            class ElementsCollection
+            class MetaCollection
+            class ScriptsCollection
+            class StylesCollection
+        }
+
+    }
+
+}
+@enduml
